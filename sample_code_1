@@ -1,0 +1,92 @@
+# load the teradata, ODBC and PMML libraries
+
+
+library(teradataR)
+library(RODBC)
+
+
+# connect to Teradata via teradataR not the RODBC package
+
+tdConnect("Barbera", "pauls", "pauls","pauls")
+
+# set up a data frame pointing to a teradata table
+# no data is brought down into R
+# bigtable_r is a view in pauls database that points to a 1.1 billion row table
+
+bigdf<-td.data.frame("big_table_r")
+
+
+# show column name
+bigdf
+
+# frequence anaylsis on state
+# this is executed as SQL inside of Teradata
+
+bdfreq<-td.freq(bigdf,"state")
+
+bdfreq
+
+# get stats on premium 
+# again run inside of database 
+
+bdstat<-td.stats(bigdf,"premium")
+
+bdstat
+
+# these are the standard twm demo data
+
+acct<-td.data.frame("accounts")
+
+cust<-td.data.frame("customer")
+
+summary(acct)
+
+cust
+
+# join the two tables together via a left outer join on cust_id, storing the results in a table called cust_acct
+
+td.join(cust,acct,"cust_acct1", "pauls",index1="cust_id", index2="cust_id",joinType="left outer" )
+
+# create a new data frame with just the income age and years with bank columns
+# no data extracted (basically creates a select statement
+# could put in a where clause if we wanted eg subset(cust,select=c("income","age","years_with_bank"), age >=35)
+
+newdf<-subset(cust,select=c("income","age","years_with_bank"))
+
+newdf
+
+# create a new variable in the data frame 
+newdf["incage"]<-newdf["income"]/newdf["age"]
+
+newdf
+
+# create a new table in the database with the new variable in it.
+
+as.td.data.frame(newdf, tableName="new_tf1", database="pauls")
+
+
+# do a nested stats
+IncomeStatsbyGender<-td.tapply(cust["income"],cust["gender"], td.stats)
+
+IncomeStatsbyGender
+
+adsbase<-td.data.frame("customer_analysis")
+
+adsbase
+
+#partition out the numerics for a kmeans cluster
+adskm<-subset(adsbase,select=c("income","age","years_with_bank","female","single","married","ccacct","ckacct","svacct","avg_cc_tran_cnt","avg_ck_tran_cnt","avg_sv_tran_cnt"))
+
+# run a kmeans cluster with 5 cluster - this is done inside database
+custkm5<-td.kmeans(adskm,5)
+
+custkm5
+
+# score the kmeans inside the database
+predict.kmeans(custkm5,adsbase,"cust_cluster51")
+
+scrkm5<-predict.kmeans(custkm5,adsbase,"cust_cluster5")
+
+scrkm5
+
+        
