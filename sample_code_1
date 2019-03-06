@@ -7,7 +7,7 @@ library(RODBC)
 
 # connect to Teradata via teradataR not the RODBC package
 
-tdConnect("Barbera", "pauls", "pauls","pauls")
+tdConnect("mytd", "mylogon", "mypassword","mydatabase")
 
 # set up a data frame pointing to a teradata table
 # no data is brought down into R
